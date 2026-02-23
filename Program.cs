@@ -1,28 +1,12 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
-using Microsoft.IdentityModel.Protocols.OpenIdConnect;
-using TestTenantAuth.Options;
 using TestTenantAuth.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllersWithViews();
-builder.Services.AddSingleton<ITenantCustomerStore, InMemoryTenantCustomerStore>();
-
-builder.Services
-    .AddOptions<AzureAdOptions>()
-    .Bind(builder.Configuration.GetSection("AzureAd"))
-    .ValidateDataAnnotations()
-    .Validate(options => !string.Equals(options.ClientId, "YOUR-CLIENT-ID", StringComparison.OrdinalIgnoreCase), "AzureAd:ClientId muss auf die echte App-Registrierung gesetzt werden.")
-    .ValidateOnStart();
-
-builder.Services
-    .AddOptions<ConsentOptions>()
-    .Bind(builder.Configuration.GetSection("Consent"))
-    .ValidateDataAnnotations()
-    .ValidateOnStart();
-
-var azureAd = builder.Configuration.GetSection("AzureAd").Get<AzureAdOptions>() ?? new AzureAdOptions();
+builder.Services.AddRazorPages();
+builder.Services.AddSingleton<ITenantStore, InMemoryTenantStore>();
 
 builder.Services
     .AddAuthentication(options =>
@@ -31,24 +15,55 @@ builder.Services
         options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
     })
     .AddCookie()
-    .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, options =>
+    .AddOpenIdConnect(options =>
     {
-        options.Authority = $"{azureAd.Instance.TrimEnd('/')}/{azureAd.TenantId}/v2.0";
-        options.ClientId = azureAd.ClientId;
-        options.ClientSecret = azureAd.ClientSecret;
-        options.CallbackPath = azureAd.CallbackPath;
+        var entraId = builder.Configuration.GetSection("EntraId");
 
-        options.ResponseType = OpenIdConnectResponseType.Code;
+        options.Authority = entraId["Authority"] ?? "https://login.microsoftonline.com/organizations/v2.0";
+        options.ClientId = entraId["ClientId"] ?? string.Empty;
+        options.ClientSecret = entraId["ClientSecret"] ?? string.Empty;
+        options.CallbackPath = entraId["CallbackPath"] ?? "/signin-oidc";
+        options.ResponseType = "code";
         options.SaveTokens = true;
+        options.Scope.Clear();
+        options.Scope.Add("openid");
+        options.Scope.Add("profile");
+        options.Scope.Add("offline_access");
 
-        options.TokenValidationParameters.ValidateIssuer = false;
+        options.Events = new OpenIdConnectEvents
+        {
+            OnTokenValidated = context =>
+            {
+                var tenantStore = context.HttpContext.RequestServices.GetRequiredService<ITenantStore>();
+                var tid = context.Principal?.FindFirstValue("tid");
+
+                if (string.IsNullOrWhiteSpace(tid) || tenantStore.GetByTenantId(tid) is null)
+                {
+                    context.Fail("Tenant not onboarded");
+                }
+
+                return Task.CompletedTask;
+            },
+            OnAuthenticationFailed = context =>
+            {
+                if (string.Equals(context.Exception?.Message, "Tenant not onboarded", StringComparison.OrdinalIgnoreCase))
+                {
+                    context.Response.Redirect("/?error=tenant_not_onboarded");
+                    context.HandleResponse();
+                }
+
+                return Task.CompletedTask;
+            }
+        };
     });
+
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
+    app.UseExceptionHandler("/Error");
     app.UseHsts();
 }
 
@@ -56,12 +71,9 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
-
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+app.MapRazorPages();
 
 app.Run();

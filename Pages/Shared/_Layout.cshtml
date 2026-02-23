@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Tenant Auth Demo</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2rem; }
+        .notice { padding: 0.75rem; border: 1px solid #1976d2; background: #e3f2fd; margin-bottom: 1rem; }
+        table { border-collapse: collapse; width: 100%; margin-top: 1rem; }
+        th, td { border: 1px solid #ddd; padding: 0.5rem; text-align: left; }
+        th { background: #f5f5f5; }
+        .ok { color: #1b5e20; font-weight: bold; }
+        .warn { color: #b71c1c; font-weight: bold; }
+        form.inline { display: inline; }
+        .error { background: #ffebee; border: 1px solid #d32f2f; padding: 0.5rem; }
+    </style>
+</head>
+<body>
+    <p>
+        <a href="/">Index</a> |
+        <a href="/test">Test (geschützt)</a>
+    </p>
+    @RenderBody()
+</body>
+</html>
