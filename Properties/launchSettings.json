@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "test-tenant-auth": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:52509;http://localhost:52510"
+    }
+  }
+}

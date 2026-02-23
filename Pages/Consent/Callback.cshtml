@@ -1,0 +1,20 @@
+@page "/consent/callback"
+@model TestTenantAuth.Pages.Consent.CallbackModel
+@{
+    ViewData["Title"] = "Consent Callback";
+}
+
+<h1>Admin Consent Ergebnis</h1>
+
+<ul>
+    <li>admin_consent: @Model.AdminConsent</li>
+    <li>tenant: @Model.TenantId</li>
+    <li>error: @Model.Error</li>
+    <li>error_description: @Model.ErrorDescription</li>
+</ul>
+
+@if (Model.ConsentSucceeded)
+{
+    <p class="ok">Consent gespeichert ✅</p>
+    <p><a href="/test">Zu /test</a></p>
+}
