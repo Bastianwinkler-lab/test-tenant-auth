@@ -1,0 +1,52 @@
+@model TestTenantAuth.ViewModels.DataPageViewModel
+
+@{
+    ViewData["Title"] = "Daten anlegen";
+}
+
+<h1>/data - InMemory Tabelle</h1>
+
+<p><a href="/index">Zurück zu /index</a></p>
+
+@if (TempData["Message"] is string message)
+{
+    <p style="color:green">@message</p>
+}
+
+<form method="post" asp-action="Index">
+    <div>
+        <label asp-for="TenantId"></label>
+        <input asp-for="TenantId" />
+        <span asp-validation-for="TenantId"></span>
+    </div>
+    <div>
+        <label asp-for="CustomerName"></label>
+        <input asp-for="CustomerName" />
+        <span asp-validation-for="CustomerName"></span>
+    </div>
+    <button type="submit">Datensatz speichern</button>
+</form>
+
+<h2>Aktuelle Datensätze</h2>
+<table>
+    <thead>
+    <tr>
+        <th>TenantID</th>
+        <th>Kundenname</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var item in Model.ExistingItems)
+    {
+        <tr>
+            <td>@item.TenantId</td>
+            <td>@item.CustomerName</td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+<h2>Consent für fremden Tenant</h2>
+<p>Führe diesen Admin-Consent-Link im fremden Tenant aus:</p>
+<pre>@Model.ConsentUrl</pre>
+<p><strong>Hinweis:</strong> Die ClientID kommt aus der Azure App-Registrierung dieser Web-App (Konfiguration <code>AzureAd:ClientId</code>).</p>

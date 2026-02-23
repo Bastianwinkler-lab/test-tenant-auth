@@ -1,0 +1,38 @@
+@model TestTenantAuth.Controllers.IndexViewModel
+
+@{
+    ViewData["Title"] = "Tenant-Daten";
+}
+
+<h1>Daten für Tenant: @Model.TenantId</h1>
+
+<p>
+    <a href="/signin">Anmelden</a> |
+    <a href="/signout">Abmelden</a> |
+    <a href="/data">Daten verwalten</a>
+</p>
+
+@if (!Model.Customers.Any())
+{
+    <p>Keine Daten für diesen Tenant gefunden.</p>
+}
+else
+{
+    <table>
+        <thead>
+            <tr>
+                <th>TenantID</th>
+                <th>Kundenname</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var item in Model.Customers)
+        {
+            <tr>
+                <td>@item.TenantId</td>
+                <td>@item.CustomerName</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
