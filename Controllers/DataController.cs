@@ -1,12 +1,17 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using TestTenantAuth.Options;
 using TestTenantAuth.Services;
 using TestTenantAuth.ViewModels;
 
 namespace TestTenantAuth.Controllers;
 
 [AllowAnonymous]
-public class DataController(ITenantCustomerStore store, IConfiguration configuration) : Controller
+public class DataController(
+    ITenantCustomerStore store,
+    IOptions<AzureAdOptions> azureAdOptions,
+    IOptions<ConsentOptions> consentOptions) : Controller
 {
     [HttpGet("/data")]
     public IActionResult Index()
@@ -38,12 +43,11 @@ public class DataController(ITenantCustomerStore store, IConfiguration configura
 
     private DataPageViewModel BuildViewModel()
     {
-        var azureAd = configuration.GetSection("AzureAd");
-        var instance = (azureAd["Instance"] ?? "https://login.microsoftonline.com/").TrimEnd('/');
-        var clientId = azureAd["ClientId"] ?? string.Empty;
-        var redirectUri = configuration["Consent:RedirectUri"] ?? "https://localhost:5001/signin-oidc";
+        var azureAd = azureAdOptions.Value;
+        var consent = consentOptions.Value;
+        var instance = azureAd.Instance.TrimEnd('/');
 
-        var consentUrl = $"{instance}/common/adminconsent?client_id={Uri.EscapeDataString(clientId)}&redirect_uri={Uri.EscapeDataString(redirectUri)}";
+        var consentUrl = $"{instance}/common/adminconsent?client_id={Uri.EscapeDataString(azureAd.ClientId)}&redirect_uri={Uri.EscapeDataString(consent.RedirectUri)}";
 
         return new DataPageViewModel
         {
