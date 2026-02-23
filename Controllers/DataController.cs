@@ -1,0 +1,58 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using TestTenantAuth.Options;
+using TestTenantAuth.Services;
+using TestTenantAuth.ViewModels;
+
+namespace TestTenantAuth.Controllers;
+
+[AllowAnonymous]
+public class DataController(
+    ITenantCustomerStore store,
+    IOptions<AzureAdOptions> azureAdOptions,
+    IOptions<ConsentOptions> consentOptions) : Controller
+{
+    [HttpGet("/data")]
+    public IActionResult Index()
+    {
+        return View(BuildViewModel());
+    }
+
+    [HttpPost("/data")]
+    [ValidateAntiForgeryToken]
+    public IActionResult Index(DataPageViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            var invalidModel = BuildViewModel();
+            invalidModel.TenantId = model.TenantId;
+            invalidModel.CustomerName = model.CustomerName;
+            return View(invalidModel);
+        }
+
+        store.Add(new Models.TenantCustomer
+        {
+            TenantId = model.TenantId,
+            CustomerName = model.CustomerName
+        });
+
+        TempData["Message"] = "Datensatz erfolgreich angelegt.";
+        return RedirectToAction(nameof(Index));
+    }
+
+    private DataPageViewModel BuildViewModel()
+    {
+        var azureAd = azureAdOptions.Value;
+        var consent = consentOptions.Value;
+        var instance = azureAd.Instance.TrimEnd('/');
+
+        var consentUrl = $"{instance}/common/adminconsent?client_id={Uri.EscapeDataString(azureAd.ClientId)}&redirect_uri={Uri.EscapeDataString(consent.RedirectUri)}";
+
+        return new DataPageViewModel
+        {
+            ExistingItems = store.GetAll(),
+            ConsentUrl = consentUrl
+        };
+    }
+}
