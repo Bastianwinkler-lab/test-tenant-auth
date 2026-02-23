@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using TestTenantAuth.Options;
 using TestTenantAuth.Services;
@@ -23,6 +22,8 @@ builder.Services
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
+var azureAd = builder.Configuration.GetSection("AzureAd").Get<AzureAdOptions>() ?? new AzureAdOptions();
+
 builder.Services
     .AddAuthentication(options =>
     {
@@ -30,10 +31,8 @@ builder.Services
         options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
     })
     .AddCookie()
-    .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, (options, provider) =>
+    .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, options =>
     {
-        var azureAd = provider.GetRequiredService<IOptions<AzureAdOptions>>().Value;
-
         options.Authority = $"{azureAd.Instance.TrimEnd('/')}/{azureAd.TenantId}/v2.0";
         options.ClientId = azureAd.ClientId;
         options.ClientSecret = azureAd.ClientSecret;
