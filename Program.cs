@@ -25,6 +25,10 @@ builder.Services
         options.CallbackPath = entraId["CallbackPath"] ?? "/signin-oidc";
         options.ResponseType = "code";
         options.SaveTokens = true;
+        options.Scope.Clear();
+        options.Scope.Add("openid");
+        options.Scope.Add("profile");
+        options.Scope.Add("offline_access");
 
         options.Events = new OpenIdConnectEvents
         {
