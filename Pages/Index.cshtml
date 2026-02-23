@@ -1,0 +1,71 @@
+@page "/"
+@model TestTenantAuth.Pages.IndexModel
+@{
+    ViewData["Title"] = "Index";
+}
+
+<div class="notice">
+    <strong>Hinweis:</strong> Index ist öffentlich (ohne Auth). /test ist geschützt.
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+{
+    <div class="error">@Model.ErrorMessage</div>
+}
+
+<h2>TenantRecords (InMemory)</h2>
+<table>
+    <thead>
+    <tr>
+        <th>TenantId</th>
+        <th>CustomerName</th>
+        <th>Consent</th>
+        <th>Aktionen</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var item in Model.Records)
+    {
+        <tr>
+            <td>@item.TenantId</td>
+            <td>@item.CustomerName</td>
+            <td>
+                @if (item.ConsentGranted)
+                {
+                    <span class="ok">Granted (@item.ConsentGrantedAt)</span>
+                }
+                else
+                {
+                    <span class="warn">Not Granted</span>
+                }
+            </td>
+            <td>
+                <a href="@Model.BuildAdminConsentLink(item.TenantId)">Admin Consent</a>
+
+                <form method="post" asp-page-handler="Edit" class="inline">
+                    <input type="hidden" name="tenantId" value="@item.TenantId" />
+                    <button type="submit">Bearbeiten</button>
+                </form>
+
+                <form method="post" asp-page-handler="Delete" class="inline">
+                    <input type="hidden" name="tenantId" value="@item.TenantId" />
+                    <button type="submit">Löschen</button>
+                </form>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+<h2>@(Model.IsEditMode ? "Tenant bearbeiten" : "Neuen Tenant anlegen")</h2>
+<form method="post" asp-page-handler="Save">
+    <div>
+        <label asp-for="Form.TenantId"></label>
+        <input asp-for="Form.TenantId" />
+    </div>
+    <div>
+        <label asp-for="Form.CustomerName"></label>
+        <input asp-for="Form.CustomerName" />
+    </div>
+    <button type="submit">@(Model.IsEditMode ? "Update" : "Anlegen")</button>
+</form>

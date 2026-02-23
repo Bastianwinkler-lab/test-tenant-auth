@@ -1,0 +1,27 @@
+@page "/test"
+@model TestTenantAuth.Pages.TestModel
+@{
+    ViewData["Title"] = "Test";
+}
+
+<h1>Geschützte Test-Seite</h1>
+<p class="ok">Authenticated ✅</p>
+
+<ul>
+    <li>DisplayName: @Model.DisplayName</li>
+    <li>TenantId (tid): @Model.TenantId</li>
+    <li>ObjectId (oid): @Model.ObjectId</li>
+    <li>Issuer (iss): @Model.Issuer</li>
+</ul>
+
+<p>
+    Tenant known:
+    @if (Model.TenantKnown)
+    {
+        <span class="ok">Yes (@Model.CustomerName)</span>
+    }
+    else
+    {
+        <span class="warn">No</span>
+    }
+</p>
